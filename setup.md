@@ -26,8 +26,22 @@ Before starting, make sure you have the following installed:
 ### Option 2: MongoDB Atlas (Cloud)
 1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
 2. Create a new cluster
-3. Get your connection string
-4. Update `backend/.env` with your Atlas connection string
+3. Configure database access:
+   - Go to "Database Access" in the left sidebar
+   - Add a new database user with read/write permissions
+4. Configure network access:
+   - Go to "Network Access" in the left sidebar
+   - Add your current IP address or allow access from anywhere (0.0.0.0/0) for development
+5. Get your connection string:
+   - Go to "Clusters" in the left sidebar
+   - Click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string
+6. Update `backend/.env` with your Atlas connection string:
+   ```bash
+   # Replace placeholders with your actual credentials
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority
+   ```
 
 ## 🔧 Backend Setup
 
@@ -47,7 +61,11 @@ Before starting, make sure you have the following installed:
    cp env.example .env
    
    # Edit .env with your MongoDB connection string
+   # For local MongoDB:
    # MONGODB_URI=mongodb://localhost:27017/attendance_app
+   
+   # For MongoDB Atlas:
+   # MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-database-name
    ```
 
 4. **Seed the database with initial student data:**
