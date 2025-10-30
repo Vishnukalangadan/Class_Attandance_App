@@ -67,6 +67,12 @@ app.get('/api/health', (req, res) => {
         database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
     });
 });
+app.get('/', (req, res) => {
+    res.json({
+        activeStatus: true,
+        error: false
+    });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
