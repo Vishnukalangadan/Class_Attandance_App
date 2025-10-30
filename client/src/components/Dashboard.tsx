@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem } from '@mui/material';
+import { Box, AppBar, Toolbar, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import { AccountCircle, Logout, CalendarToday } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import Calendar from './Calendar';

@@ -38,8 +38,7 @@ const StudentItem: React.FC<StudentItemProps> = ({ student, onAttendanceChange, 
 
   const isPresent = attendanceStatus === 'present';
   const isAbsent = attendanceStatus === 'absent';
-  const isMarked = isPresent || isAbsent;
-  const isUnmarked = !isMarked;
+  // const isUnmarked = !isPresent && !isAbsent; // Removed unused variable
 
   return (
     <StudentItemContainer>
@@ -47,7 +46,7 @@ const StudentItem: React.FC<StudentItemProps> = ({ student, onAttendanceChange, 
       <ButtonGroup>
         {!isEditing ? (
           // Not in edit mode
-          isMarked ? (
+          isPresent || isAbsent ? (
             // Show current status with edit button
             <>
               {isPresent && (
