@@ -11,10 +11,30 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(helmet());
 app.use(morgan('combined'));
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+
+// More flexible CORS configuration
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // List of allowed origins
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://classattandance.netlify.app',
+            // Add any other origins you want to allow
+        ];
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
