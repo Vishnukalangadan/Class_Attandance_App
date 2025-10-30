@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const token = localStorage.getItem('attendance_token');
         if (token) {
           // Verify token with backend
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          const response = await fetch(`${API_BASE_URL}/auth/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           if (response.ok) {
             const data = await response.json();
-            setUser(data.user);
+            setUser(data);
           } else {
             // Token invalid, remove it
             localStorage.removeItem('attendance_token');
@@ -96,12 +96,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ username: name, email, password }),
       });
 
       const data = await response.json();
