@@ -82,12 +82,17 @@ app.use('*', (req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-});
+// For Vercel deployment, we need to export the app
+module.exports = app;
+
+// Start server only when not running on Vercel
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+        console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    });
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
