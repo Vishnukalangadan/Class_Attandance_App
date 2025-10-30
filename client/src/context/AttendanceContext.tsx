@@ -20,11 +20,6 @@ export const AttendanceProvider: React.FC<{ children: ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load initial data
-  useEffect(() => {
-    initializeData();
-  }, []);
-
   const initializeData = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +39,11 @@ export const AttendanceProvider: React.FC<{ children: ReactNode }> = ({ children
       setLoading(false);
     }
   }, []);
+
+  // Load initial data
+  useEffect(() => {
+    initializeData();
+  }, [initializeData]);
 
   const getAttendanceForDate = useCallback(async (date: string): Promise<DailyAttendance> => {
     try {
