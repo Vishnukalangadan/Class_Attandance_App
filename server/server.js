@@ -152,7 +152,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-    
+
     // Check MongoDB connection status after startup
     setTimeout(() => {
         if (isDbConnected && mongoose.connection.readyState === 1) {
