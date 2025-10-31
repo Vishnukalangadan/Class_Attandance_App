@@ -29,7 +29,12 @@ router.get('/', async (req, res) => {
         res.json(formattedData);
     } catch (error) {
         console.error('Error fetching attendance data:', error);
-        res.status(500).json({ error: 'Failed to fetch attendance data', details: error.message });
+        // More detailed error response
+        res.status(500).json({
+            error: 'Failed to fetch attendance data',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -69,7 +74,12 @@ router.get('/:date', async (req, res) => {
         res.json(formattedAttendance);
     } catch (error) {
         console.error('Error fetching attendance for date:', error);
-        res.status(500).json({ error: 'Failed to fetch attendance for date', details: error.message });
+        // More detailed error response
+        res.status(500).json({
+            error: 'Failed to fetch attendance for date',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -120,7 +130,13 @@ router.post('/', async (req, res) => {
 
         res.json(formattedAttendance);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to save attendance data' });
+        console.error('Error saving attendance data:', error);
+        // More detailed error response
+        res.status(500).json({
+            error: 'Failed to save attendance data',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -173,7 +189,13 @@ router.put('/:date', async (req, res) => {
 
         res.json(formattedAttendance);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update attendance data' });
+        console.error('Error updating attendance data:', error);
+        // More detailed error response
+        res.status(500).json({
+            error: 'Failed to update attendance data',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -201,7 +223,13 @@ router.get('/stats/:date', async (req, res) => {
             absentAN: attendance.absentCountAN
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch attendance statistics' });
+        console.error('Error fetching attendance statistics:', error);
+        // More detailed error response
+        res.status(500).json({
+            error: 'Failed to fetch attendance statistics',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

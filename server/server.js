@@ -39,19 +39,21 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection
+// MongoDB connection with updated options
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_app';
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect(MONGODB_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB');
     })
     .catch((error) => {
         console.error('❌ MongoDB connection error:', error);
-        process.exit(1);
+        console.error('Please check your MONGODB_URI environment variable');
+        console.error('For Vercel deployment, you need to set MONGODB_URI to a MongoDB Atlas connection string');
+        // Don't exit in Vercel environment as it might cause deployment issues
+        if (!process.env.VERCEL) {
+            process.exit(1);
+        }
     });
 
 // Authentication middleware function
@@ -80,14 +82,42 @@ app.use('/api/students', require('./routes/students'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/auth', require('./routes/auth'));
 
-// Health check endpoint
+// Health check endpoint with more detailed information
 app.get('/api/health', (req, res) => {
+    const mongooseState = mongoose.connection.readyState;
+    const mongooseStates = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    };
+
+    // Extract hostname from MONGODB_URI for security (hide credentials)
+    let dbHost = 'Not set';
+    if (process.env.MONGODB_URI) {
+        try {
+            const url = new URL(process.env.MONGODB_URI);
+            dbHost = url.hostname;
+        } catch (e) {
+            dbHost = 'Invalid URI format';
+        }
+    }
+
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+        environment: process.env.NODE_ENV || 'development',
+        platform: process.env.VERCEL ? 'Vercel' : 'Local',
+        database: {
+            status: mongooseStates[mongooseState] || 'unknown',
+            readyState: mongooseState,
+            host: dbHost
+        },
+        port: PORT,
+        uptime: Math.floor(process.uptime())
     });
 });
+
 app.get('/', (req, res) => {
     res.json({
         activeStatus: true,
@@ -100,7 +130,9 @@ app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+        // Include stack trace only in development
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });
 
