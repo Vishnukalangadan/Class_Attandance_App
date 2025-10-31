@@ -47,10 +47,27 @@ console.log('Attempting to connect to MongoDB with URI:', MONGODB_URI.substring(
 // Track connection status
 let isDbConnected = false;
 
-mongoose.connect(MONGODB_URI, {
+// Enhanced MongoDB connection options for Render deployment
+const mongoOptions = {
     serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-})
+    // SSL/TLS options for Render deployment
+    tls: true,
+    tlsInsecure: false,
+    // Retry options
+    retryWrites: true,
+    retryReads: true,
+    // Connection pool options
+    maxPoolSize: 10,
+    minPoolSize: 5,
+    // Handle DNS issues
+    srvMaxHosts: 3,
+    // Compatibility options
+    useUnifiedTopology: true,
+    useNewUrlParser: true
+};
+
+mongoose.connect(MONGODB_URI, mongoOptions)
     .then(() => {
         console.log('✅ Connected to MongoDB');
         isDbConnected = true;
@@ -65,6 +82,7 @@ mongoose.connect(MONGODB_URI, {
         console.log('   2. Confirm your IP is whitelisted in MongoDB Atlas');
         console.log('   3. Check if your MongoDB Atlas cluster is paused (resume if needed)');
         console.log('   4. Try connecting with MongoDB Compass to test the connection string');
+        console.log('   5. For Render deployment, ensure 0.0.0.0/0 is in your Atlas IP whitelist');
     });
 
 // Log MongoDB connection events
