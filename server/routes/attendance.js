@@ -15,18 +15,21 @@ router.get('/', async (req, res) => {
         attendanceRecords.forEach(record => {
             formattedData[record.date] = {
                 date: record.date,
-                students: record.students.map(s => ({
-                    id: s.studentId._id.toString(),
-                    name: s.studentId.name,
-                    fnStatus: s.fnStatus,
-                    anStatus: s.anStatus
-                }))
+                students: record.students
+                    .filter(s => s.studentId) // Filter out null student references
+                    .map(s => ({
+                        id: s.studentId._id.toString(),
+                        name: s.studentId.name,
+                        fnStatus: s.fnStatus,
+                        anStatus: s.anStatus
+                    }))
             };
         });
 
         res.json(formattedData);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch attendance data' });
+        console.error('Error fetching attendance data:', error);
+        res.status(500).json({ error: 'Failed to fetch attendance data', details: error.message });
     }
 });
 
@@ -53,17 +56,20 @@ router.get('/:date', async (req, res) => {
 
         const formattedAttendance = {
             date: attendance.date,
-            students: attendance.students.map(s => ({
-                id: s.studentId._id.toString(),
-                name: s.studentId.name,
-                fnStatus: s.fnStatus,
-                anStatus: s.anStatus
-            }))
+            students: attendance.students
+                .filter(s => s.studentId) // Filter out null student references
+                .map(s => ({
+                    id: s.studentId._id.toString(),
+                    name: s.studentId.name,
+                    fnStatus: s.fnStatus,
+                    anStatus: s.anStatus
+                }))
         };
 
         res.json(formattedAttendance);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch attendance for date' });
+        console.error('Error fetching attendance for date:', error);
+        res.status(500).json({ error: 'Failed to fetch attendance for date', details: error.message });
     }
 });
 
@@ -102,12 +108,14 @@ router.post('/', async (req, res) => {
 
         const formattedAttendance = {
             date: attendance.date,
-            students: attendance.students.map(s => ({
-                id: s.studentId._id.toString(),
-                name: s.studentId.name,
-                fnStatus: s.fnStatus,
-                anStatus: s.anStatus
-            }))
+            students: attendance.students
+                .filter(s => s.studentId) // Filter out null student references
+                .map(s => ({
+                    id: s.studentId._id.toString(),
+                    name: s.studentId.name,
+                    fnStatus: s.fnStatus,
+                    anStatus: s.anStatus
+                }))
         };
 
         res.json(formattedAttendance);
@@ -153,12 +161,14 @@ router.put('/:date', async (req, res) => {
 
         const formattedAttendance = {
             date: attendance.date,
-            students: attendance.students.map(s => ({
-                id: s.studentId._id.toString(),
-                name: s.studentId.name,
-                fnStatus: s.fnStatus,
-                anStatus: s.anStatus
-            }))
+            students: attendance.students
+                .filter(s => s.studentId) // Filter out null student references
+                .map(s => ({
+                    id: s.studentId._id.toString(),
+                    name: s.studentId.name,
+                    fnStatus: s.fnStatus,
+                    anStatus: s.anStatus
+                }))
         };
 
         res.json(formattedAttendance);

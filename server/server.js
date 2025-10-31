@@ -21,6 +21,7 @@ const corsOptions = {
         // List of allowed origins
         const allowedOrigins = [
             'http://localhost:3000',
+            'http://localhost:3002',
             'https://classattandance.netlify.app',
             // Add any other origins you want to allow
         ];
