@@ -3,15 +3,24 @@ const router = express.Router();
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
 
+// Helper function to check database connection
+const checkDatabaseConnection = (req, res, next) => {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            error: 'Database not connected',
+            message: 'The database is currently unavailable. Please try again later.'
+        });
+    }
+    next();
+};
+
 // GET /api/attendance - Get all attendance records
-router.get('/', async (req, res) => {
+router.get('/', checkDatabaseConnection, async (req, res) => {
     try {
-        console.log('Fetching all attendance records');
         const attendanceRecords = await Attendance.find()
             .populate('students.studentId', 'name email rollNumber')
             .sort({ date: -1 });
-
-        console.log(`Found ${attendanceRecords.length} attendance records`);
 
         // Transform data to match frontend format
         const formattedData = {};
@@ -32,24 +41,17 @@ router.get('/', async (req, res) => {
         res.json(formattedData);
     } catch (error) {
         console.error('Error fetching attendance data:', error);
-        // More detailed error response
-        res.status(500).json({
-            error: 'Failed to fetch attendance data',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(500).json({ error: 'Failed to fetch attendance data', details: error.message });
     }
 });
 
 // GET /api/attendance/:date - Get attendance for specific date
-router.get('/:date', async (req, res) => {
+router.get('/:date', checkDatabaseConnection, async (req, res) => {
     try {
-        console.log(`Fetching attendance for date: ${req.params.date}`);
         const attendance = await Attendance.findOne({ date: req.params.date })
             .populate('students.studentId', 'name email rollNumber');
 
         if (!attendance) {
-            console.log('No attendance record found, returning default attendance');
             // Return default attendance with all students unmarked
             const students = await Student.find({ isActive: true }).sort({ name: 1 });
             const defaultAttendance = {
@@ -79,20 +81,14 @@ router.get('/:date', async (req, res) => {
         res.json(formattedAttendance);
     } catch (error) {
         console.error('Error fetching attendance for date:', error);
-        // More detailed error response
-        res.status(500).json({
-            error: 'Failed to fetch attendance for date',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(500).json({ error: 'Failed to fetch attendance for date', details: error.message });
     }
 });
 
 // POST /api/attendance - Create or update attendance for a date
-router.post('/', async (req, res) => {
+router.post('/', checkDatabaseConnection, async (req, res) => {
     try {
         const { date, students } = req.body;
-        console.log(`Saving attendance for date: ${date}`);
 
         // Validate that all students exist
         const studentIds = students.map(s => s.id);
@@ -136,21 +132,14 @@ router.post('/', async (req, res) => {
 
         res.json(formattedAttendance);
     } catch (error) {
-        console.error('Error saving attendance data:', error);
-        // More detailed error response
-        res.status(500).json({
-            error: 'Failed to save attendance data',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(400).json({ error: 'Failed to save attendance data' });
     }
 });
 
 // PUT /api/attendance/:date - Update attendance for specific date
-router.put('/:date', async (req, res) => {
+router.put('/:date', checkDatabaseConnection, async (req, res) => {
     try {
         const { students } = req.body;
-        console.log(`Updating attendance for date: ${req.params.date}`);
 
         // Validate that all students exist
         const studentIds = students.map(s => s.id);
@@ -196,20 +185,13 @@ router.put('/:date', async (req, res) => {
 
         res.json(formattedAttendance);
     } catch (error) {
-        console.error('Error updating attendance data:', error);
-        // More detailed error response
-        res.status(500).json({
-            error: 'Failed to update attendance data',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(400).json({ error: 'Failed to update attendance data' });
     }
 });
 
 // GET /api/attendance/stats/:date - Get attendance statistics for a date
-router.get('/stats/:date', async (req, res) => {
+router.get('/stats/:date', checkDatabaseConnection, async (req, res) => {
     try {
-        console.log(`Fetching attendance stats for date: ${req.params.date}`);
         const attendance = await Attendance.findOne({ date: req.params.date });
 
         if (!attendance) {
@@ -231,13 +213,7 @@ router.get('/stats/:date', async (req, res) => {
             absentAN: attendance.absentCountAN
         });
     } catch (error) {
-        console.error('Error fetching attendance statistics:', error);
-        // More detailed error response
-        res.status(500).json({
-            error: 'Failed to fetch attendance statistics',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(500).json({ error: 'Failed to fetch attendance statistics' });
     }
 });
 
