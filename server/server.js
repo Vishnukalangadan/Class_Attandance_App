@@ -39,21 +39,53 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection with better error handling
+// MongoDB connection with better error handling and debugging
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_app';
 
+console.log('Attempting to connect to MongoDB with URI:', MONGODB_URI.substring(0, 30) + '...'); // Log first 30 chars for security
+
+// Track connection status
+let isDbConnected = false;
+
 mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
 })
     .then(() => {
         console.log('✅ Connected to MongoDB');
+        isDbConnected = true;
     })
     .catch((error) => {
         console.error('❌ MongoDB connection error:', error.message);
+        console.error('Full error details:', error);
+        isDbConnected = false;
         console.log('⚠️  Server will start without database connection. Some features may not work.');
-        console.log('💡 Make sure your MongoDB URI is correct and your IP is whitelisted in MongoDB Atlas.');
+        console.log('💡 Troubleshooting steps:');
+        console.log('   1. Verify your MONGODB_URI is correct');
+        console.log('   2. Confirm your IP is whitelisted in MongoDB Atlas');
+        console.log('   3. Check if your MongoDB Atlas cluster is paused (resume if needed)');
+        console.log('   4. Try connecting with MongoDB Compass to test the connection string');
     });
+
+// Log MongoDB connection events
+mongoose.connection.on('connecting', () => {
+    console.log('MongoDB connecting...');
+});
+
+mongoose.connection.on('connected', () => {
+    console.log('MongoDB connected event fired');
+    isDbConnected = true;
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+    isDbConnected = false;
+});
+
+mongoose.connection.on('error', (error) => {
+    console.error('MongoDB connection error event:', error);
+    isDbConnected = false;
+});
 
 // Authentication middleware function
 function authenticateToken(req, res, next) {
@@ -81,13 +113,15 @@ app.use('/api/students', require('./routes/students'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/auth', require('./routes/auth'));
 
-// Health check endpoint
+// Health check endpoint with database status
 app.get('/api/health', (req, res) => {
+    const dbStatus = isDbConnected && mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-        mongooseState: mongoose.connection.readyState
+        database: dbStatus,
+        mongooseState: mongoose.connection.readyState,
+        uptime: process.uptime()
     });
 });
 
@@ -118,14 +152,16 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-
+    
     // Check MongoDB connection status after startup
     setTimeout(() => {
-        if (mongoose.connection.readyState !== 1) {
+        if (isDbConnected && mongoose.connection.readyState === 1) {
+            console.log('✅ MongoDB connection confirmed after startup');
+        } else if (!isDbConnected) {
             console.log('⚠️  MongoDB is not connected. Some features may not work properly.');
             console.log('💡 Check your MONGODB_URI and network connectivity.');
         }
-    }, 2000);
+    }, 3000);
 });
 
 // Graceful shutdown
