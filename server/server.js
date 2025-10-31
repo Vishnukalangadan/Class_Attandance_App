@@ -48,23 +48,19 @@ console.log('Attempting to connect to MongoDB with URI:', MONGODB_URI.substring(
 let isDbConnected = false;
 
 // Enhanced MongoDB connection options for Render deployment
+// Removed conflicting options that cause "Cannot combine replicaSet option with srvMaxHosts" error
 const mongoOptions = {
     serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     // SSL/TLS options for Render deployment
     tls: true,
-    tlsInsecure: false,
     // Retry options
     retryWrites: true,
     retryReads: true,
     // Connection pool options
     maxPoolSize: 10,
-    minPoolSize: 5,
-    // Handle DNS issues
-    srvMaxHosts: 3,
-    // Compatibility options
-    useUnifiedTopology: true,
-    useNewUrlParser: true
+    minPoolSize: 5
+    // Removed srvMaxHosts as it conflicts with replicaSet option in the connection string
 };
 
 mongoose.connect(MONGODB_URI, mongoOptions)
@@ -170,7 +166,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-
+    
     // Check MongoDB connection status after startup
     setTimeout(() => {
         if (isDbConnected && mongoose.connection.readyState === 1) {
