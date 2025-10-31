@@ -6,9 +6,12 @@ const Student = require('../models/Student');
 // GET /api/attendance - Get all attendance records
 router.get('/', async (req, res) => {
     try {
+        console.log('Fetching all attendance records');
         const attendanceRecords = await Attendance.find()
             .populate('students.studentId', 'name email rollNumber')
             .sort({ date: -1 });
+
+        console.log(`Found ${attendanceRecords.length} attendance records`);
 
         // Transform data to match frontend format
         const formattedData = {};
@@ -41,10 +44,12 @@ router.get('/', async (req, res) => {
 // GET /api/attendance/:date - Get attendance for specific date
 router.get('/:date', async (req, res) => {
     try {
+        console.log(`Fetching attendance for date: ${req.params.date}`);
         const attendance = await Attendance.findOne({ date: req.params.date })
             .populate('students.studentId', 'name email rollNumber');
 
         if (!attendance) {
+            console.log('No attendance record found, returning default attendance');
             // Return default attendance with all students unmarked
             const students = await Student.find({ isActive: true }).sort({ name: 1 });
             const defaultAttendance = {
@@ -87,6 +92,7 @@ router.get('/:date', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { date, students } = req.body;
+        console.log(`Saving attendance for date: ${date}`);
 
         // Validate that all students exist
         const studentIds = students.map(s => s.id);
@@ -144,6 +150,7 @@ router.post('/', async (req, res) => {
 router.put('/:date', async (req, res) => {
     try {
         const { students } = req.body;
+        console.log(`Updating attendance for date: ${req.params.date}`);
 
         // Validate that all students exist
         const studentIds = students.map(s => s.id);
@@ -202,6 +209,7 @@ router.put('/:date', async (req, res) => {
 // GET /api/attendance/stats/:date - Get attendance statistics for a date
 router.get('/stats/:date', async (req, res) => {
     try {
+        console.log(`Fetching attendance stats for date: ${req.params.date}`);
         const attendance = await Attendance.findOne({ date: req.params.date });
 
         if (!attendance) {

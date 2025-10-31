@@ -23,6 +23,7 @@ const corsOptions = {
             'http://localhost:3000',
             'http://localhost:3002',
             'https://classattandance.netlify.app',
+            'https://class-attandance-app.vercel.app',
             // Add any other origins you want to allow
         ];
 
@@ -38,6 +39,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add a middleware to log all requests for debugging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
+});
 
 // MongoDB connection with updated options
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_app';
@@ -120,25 +127,31 @@ app.get('/api/health', (req, res) => {
 
 app.get('/', (req, res) => {
     res.json({
+        message: 'Attendance App API',
         activeStatus: true,
         error: false
     });
 });
 
-// Error handling middleware
+// Error handling middleware - MUST be defined after routes
 app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({
         error: 'Internal server error',
         message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
         // Include stack trace only in development
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+        timestamp: new Date().toISOString()
     });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Route not found' });
+// 404 handler - MUST be defined after routes and before error handler
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Route not found',
+        path: req.originalUrl,
+        method: req.method
+    });
 });
 
 // For Vercel deployment, we need to export the app
