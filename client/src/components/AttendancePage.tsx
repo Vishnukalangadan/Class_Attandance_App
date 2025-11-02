@@ -3,9 +3,12 @@ import {
   Typography, 
   Box, 
   CircularProgress, 
-  Alert
+  Alert,
+  Button,
+  Snackbar,
+  Backdrop
 } from '@mui/material';
-import { CalendarToday, School, ArrowBack } from '@mui/icons-material';
+import { CalendarToday, School, ArrowBack, Save, CheckCircle } from '@mui/icons-material';
 import { useAttendance } from '../context/AttendanceContext';
 import StudentItem from './StudentItem';
 import AttendanceStatsComponent from './AttendanceStats';
@@ -33,12 +36,18 @@ interface EditingStudent {
 }
 
 const AttendancePage: React.FC<AttendancePageProps> = ({ selectedDate, onBackToCalendar }) => {
-  const { getAttendanceForDate, updateAttendance, loading, error, students } = useAttendance();
+  const { getAttendanceForDate, batchUpdateAttendance, loading, error, students } = useAttendance();
   const [attendance, setAttendance] = useState<{date: string; students: Student[]} | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<'FN' | 'AN'>('FN'); // Default to Forenoon
   // Track students currently being edited
   const [editingStudents, setEditingStudents] = useState<EditingStudent[]>([]);
+  // Track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // Track saving state
+  const [isSaving, setIsSaving] = useState(false);
+  // Snackbar for success message
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
   const loadAttendanceData = useCallback(async () => {
     try {
@@ -120,38 +129,33 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ selectedDate, onBackToC
   }, [attendance, editingStudents]);
 
   const handleAttendanceChange = async (studentId: string, status: 'present' | 'absent' | 'unmarked') => {
-    try {
-      // Remove only the specific student from editing students when change is made
-      setEditingStudents(prev => 
-        prev.filter(edit => !(edit.studentId === studentId && edit.session === session))
-      );
+    // Remove only the specific student from editing students when change is made
+    setEditingStudents(prev => 
+      prev.filter(edit => !(edit.studentId === studentId && edit.session === session))
+    );
+    
+    // Update local state only (no API call)
+    setAttendance(prev => {
+      if (!prev) return prev;
       
-      // Update the backend
-      await updateAttendance(selectedDate, studentId, session, status);
-      
-      // Update local state instead of reloading all data
-      setAttendance(prev => {
-        if (!prev) return prev;
-        
-        return {
-          ...prev,
-          students: prev.students.map(student => {
-            if (student.id === studentId) {
-              // Update only the specific student's status for the current session
-              if (session === 'FN') {
-                return { ...student, fnStatus: status };
-              } else {
-                return { ...student, anStatus: status };
-              }
+      return {
+        ...prev,
+        students: prev.students.map(student => {
+          if (student.id === studentId) {
+            // Update only the specific student's status for the current session
+            if (session === 'FN') {
+              return { ...student, fnStatus: status };
+            } else {
+              return { ...student, anStatus: status };
             }
-            return student;
-          })
-        };
-      });
-    } catch (err) {
-      console.error('Error updating attendance:', err);
-      // Keep the student in editing state if there was an error
-    }
+          }
+          return student;
+        })
+      };
+    });
+    
+    // Mark that there are unsaved changes
+    setHasUnsavedChanges(true);
   };
 
   // Handler for when student enters edit mode (this will be called from the StudentItem)
@@ -188,10 +192,34 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ selectedDate, onBackToC
     setEditingStudents([]);
   };
 
+  // Handler for saving all attendance changes
+  const handleSaveAttendance = async () => {
+    if (!attendance || !hasUnsavedChanges) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Save all students' attendance in a single API call
+      await batchUpdateAttendance(selectedDate, attendance.students);
+      
+      setHasUnsavedChanges(false);
+      setShowSuccessMessage(true);
+    } catch (err) {
+      console.error('Error saving attendance:', err);
+      alert('Failed to save attendance. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setShowSuccessMessage(false);
+  };
+
   const formatDate = (dateString: string) => {
     // Parse the date string as local date to avoid timezone issues
     const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
+    const date = new Date(year, month - 1, day+1);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -248,7 +276,48 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ selectedDate, onBackToC
   }
 
   return (
-    <AttendancePageContainer maxWidth="md">
+    <>
+      {/* Loading Backdrop */}
+      <Backdrop
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={isSaving}
+      >
+        <CircularProgress color="inherit" size={60} />
+        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+          Saving attendance...
+        </Typography>
+      </Backdrop>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={showSuccessMessage}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity="success" 
+          sx={{ 
+            width: '100%',
+            alignItems: 'center',
+            fontSize: '1rem',
+            '& .MuiAlert-icon': {
+              fontSize: '1.5rem'
+            }
+          }}
+          icon={<CheckCircle />}
+        >
+          Attendance saved successfully!
+        </Alert>
+      </Snackbar>
+
+      <AttendancePageContainer maxWidth="md">
       <AttendancePaper elevation={3}>
         <BackButton onClick={onBackToCalendar}>
           <ArrowBack sx={{ mr: 1 }} />
@@ -356,8 +425,42 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ selectedDate, onBackToC
           </Typography>
           <AttendanceStatsComponent stats={attendanceStats} session={session} />
         </StatsSection>
+
+        {/* Save Button */}
+        {hasUnsavedChanges && (
+          <Box sx={{ 
+            mt: 3, 
+            display: 'flex', 
+            justifyContent: 'center',
+            borderTop: '2px solid #e0e0e0',
+            pt: 3
+          }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <Save />}
+              disabled={isSaving}
+              onClick={handleSaveAttendance}
+              sx={{
+                minWidth: { xs: '100%', sm: '250px' },
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                borderRadius: '8px',
+                textTransform: 'none',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
+                }
+              }}
+            >
+              {isSaving ? 'Saving...' : 'Save Attendance'}
+            </Button>
+          </Box>
+        )}
       </AttendancePaper>
     </AttendancePageContainer>
+    </>
   );
 };
 

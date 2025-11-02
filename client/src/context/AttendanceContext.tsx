@@ -8,6 +8,7 @@ interface AttendanceContextType {
   loading: boolean;
   error: string | null;
   updateAttendance: (date: string, studentId: string, session: 'FN' | 'AN', status: 'present' | 'absent' | 'unmarked') => Promise<void>;
+  batchUpdateAttendance: (date: string, students: Student[]) => Promise<void>;
   getAttendanceForDate: (date: string) => Promise<DailyAttendance>;
   refreshData: () => Promise<void>;
 }
@@ -100,6 +101,23 @@ export const AttendanceProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   }, [attendanceData, getAttendanceForDate]);
 
+  const batchUpdateAttendance = useCallback(async (date: string, students: Student[]) => {
+    try {
+      // Save all students' attendance to API in one call
+      const updatedAttendance = await AttendanceService.updateAttendanceForDate(date, students);
+      
+      // Update local state
+      setAttendanceData(prev => ({
+        ...prev,
+        [date]: updatedAttendance
+      }));
+    } catch (err) {
+      console.error('Error batch updating attendance:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update attendance');
+      throw err;
+    }
+  }, []);
+
   const refreshData = useCallback(async () => {
     await initializeData();
   }, [initializeData]);
@@ -110,9 +128,10 @@ export const AttendanceProvider: React.FC<{ children: ReactNode }> = ({ children
     loading,
     error,
     updateAttendance,
+    batchUpdateAttendance,
     getAttendanceForDate,
     refreshData
-  }), [attendanceData, students, loading, error, updateAttendance, getAttendanceForDate, refreshData]);
+  }), [attendanceData, students, loading, error, updateAttendance, batchUpdateAttendance, getAttendanceForDate, refreshData]);
 
   return (
     <AttendanceContext.Provider value={contextValue}>
