@@ -5,14 +5,16 @@ import { CalendarViewProps } from '../types/attendance';
 import styled from 'styled-components';
 
 const CalendarContainer = styled(Paper)`
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  padding: 2.5rem 2rem;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  max-width: 480px;
+  margin: 0 auto;
 
   @media (max-width: 600px) {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
+    border-radius: 20px;
   }
 `;
 
@@ -20,101 +22,111 @@ const CalendarHeader = styled(Box)`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 2.5rem;
+  padding-bottom: 0;
 
   @media (max-width: 600px) {
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
 const MonthYear = styled(Typography)`
-  font-size: 1.8rem !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
-  color: #1976d2 !important;
+  color: #1a1a1a !important;
+  flex: 1;
+  text-align: center;
 
   @media (max-width: 600px) {
-    font-size: 1.4rem !important;
+    font-size: 1.25rem !important;
   }
 `;
 
 const DayHeader = styled(Box)`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
   
-  // Mobile responsive styles
   @media (max-width: 600px) {
-    gap: 0.1rem;
-    margin-bottom: 0.25rem;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
   }
 `;
 
 const DayLabel = styled(Typography)`
   text-align: center !important;
-  font-weight: 600 !important;
-  color: #666 !important;
-  padding: 0.5rem !important;
+  font-weight: 500 !important;
+  color: #999 !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0 !important;
   
-  // Mobile responsive styles to prevent overflow
   @media (max-width: 600px) {
     padding: 0.25rem 0 !important;
-    font-size: 0.7rem !important;
+    font-size: 0.75rem !important;
   }
 `;
 
 const CalendarGrid = styled(Box)`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: 0.5rem;
   
-  // Mobile responsive styles
   @media (max-width: 600px) {
-    gap: 0.1rem;
+    gap: 0.25rem;
   }
 `;
 
-const DayButton = styled(Paper)<{ isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }>`
+const DayButton = styled(Box)<{ isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }>`
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  border-radius: ${props => props.isToday ? '50%' : '8px'};
   background: ${props => {
-    if (props.isSelected) return '#1976d2';
-    if (props.isToday) return '#e3f2fd';
-    return props.isCurrentMonth ? 'white' : '#f5f5f5';
+    if (props.isToday) return '#2196F3';
+    return 'transparent';
   }} !important;
   color: ${props => {
-    if (props.isSelected) return 'white';
-    if (props.isToday) return '#1976d2';
-    return props.isCurrentMonth ? '#333' : '#999';
+    if (props.isToday) return 'white';
+    return props.isCurrentMonth ? '#1a1a1a' : '#bbb';
   }} !important;
-  border: ${props => props.isToday ? '2px solid #1976d2' : '1px solid #e0e0e0'};
+  font-weight: ${props => props.isToday ? '600' : '400'} !important;
 
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background: ${props => props.isSelected ? '#1565c0' : '#f0f0f0'} !important;
+    background: ${props => {
+      if (props.isToday) return '#1976d2';
+      return '#f5f5f5';
+    }} !important;
+    border-radius: 8px;
   }
   
-  // Mobile responsive styles
   @media (max-width: 600px) {
-    aspect-ratio: 1.2;
+    border-radius: ${props => props.isToday ? '50%' : '6px'};
   }
 `;
 
 const DayNumber = styled(Typography)`
-  font-weight: 600 !important;
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   
-  // Mobile responsive styles
   @media (max-width: 600px) {
-    font-size: 0.8rem !important;
+    font-size: 0.85rem !important;
+  }
+`;
+
+const TodayIndicator = styled(Box)`
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  text-align: center;
+  color: #2196F3;
+  font-size: 0.9rem;
+  font-weight: 500;
+  
+  @media (max-width: 600px) {
+    margin-top: 1rem;
+    font-size: 0.85rem;
   }
 `;
 
@@ -127,7 +139,7 @@ const Calendar: React.FC<CalendarViewProps> = ({ onDateSelect }) => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -162,6 +174,13 @@ const Calendar: React.FC<CalendarViewProps> = ({ onDateSelect }) => {
 
   const goToNextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const getTodayString = () => {
+    const today = new Date();
+    const month = monthNames[today.getMonth()];
+    const day = today.getDate();
+    return `${month} ${day} Today`;
   };
 
   const renderCalendarDays = () => {
@@ -228,20 +247,15 @@ const Calendar: React.FC<CalendarViewProps> = ({ onDateSelect }) => {
   return (
     <CalendarContainer elevation={3}>
       <CalendarHeader>
-        <Box display="flex" alignItems="center">
-          <CalendarToday sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
-          <MonthYear variant="h4">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </MonthYear>
-        </Box>
-        <Box>
-          <IconButton onClick={goToPreviousMonth} size="large">
-            <ChevronLeft />
-          </IconButton>
-          <IconButton onClick={goToNextMonth} size="large">
-            <ChevronRight />
-          </IconButton>
-        </Box>
+        <IconButton onClick={goToPreviousMonth} size="medium" sx={{ color: '#1a1a1a' }}>
+          <ChevronLeft />
+        </IconButton>
+        <MonthYear variant="h5">
+          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+        </MonthYear>
+        <IconButton onClick={goToNextMonth} size="medium" sx={{ color: '#1a1a1a' }}>
+          <ChevronRight />
+        </IconButton>
       </CalendarHeader>
 
       <DayHeader>
@@ -255,6 +269,10 @@ const Calendar: React.FC<CalendarViewProps> = ({ onDateSelect }) => {
       <CalendarGrid>
         {renderCalendarDays()}
       </CalendarGrid>
+      
+      <TodayIndicator>
+        {getTodayString()}
+      </TodayIndicator>
     </CalendarContainer>
   );
 };
