@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     email: {
@@ -17,13 +16,34 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.googleId; // Password not required if using Google auth
+        },
         minlength: 6
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true // Allows null values while maintaining uniqueness for non-null values
+    },
+    profilePicture: {
+        type: String // Google profile picture URL
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     role: {
         type: String,
         enum: ['admin', 'teacher', 'student'],
         default: 'teacher'
+    },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
     }
 }, {
     timestamps: true

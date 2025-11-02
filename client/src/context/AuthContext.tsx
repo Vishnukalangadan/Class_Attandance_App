@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => void;
   error: string | null;
 }
@@ -123,6 +124,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const googleLogin = async (credential: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ credential }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Google authentication failed. Please try again.');
+      }
+
+      // Save token and user data
+      localStorage.setItem('attendance_token', data.token);
+      setUser(data.user);
+    } catch (err: any) {
+      const errorMessage = err.message || 'An unexpected error occurred during Google login. Please try again.';
+      setError(errorMessage);
+      console.error('Google login error:', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('attendance_token');
@@ -135,6 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       loading,
       login,
       signup,
+      googleLogin,
       logout,
       error,
     }}>
