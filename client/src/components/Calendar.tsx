@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, IconButton, Paper } from '@mui/material';
-import { ChevronLeft, ChevronRight, CalendarToday } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight,  } from '@mui/icons-material';
 import { CalendarViewProps } from '../types/attendance';
 import styled from 'styled-components';
 

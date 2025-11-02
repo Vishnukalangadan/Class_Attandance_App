@@ -26,9 +26,7 @@ import {
   Visibility,
   VisibilityOff,
   Email,
-  Lock,
   AutoAwesome,
-  Apple,
 } from '@mui/icons-material';
 import styled from 'styled-components';
 
