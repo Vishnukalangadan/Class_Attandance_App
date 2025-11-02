@@ -53,7 +53,7 @@ router.get('/:date', checkDatabaseConnection, async (req, res) => {
 
         if (!attendance) {
             // Return default attendance with all students unmarked
-            const students = await Student.find({ isActive: true }).sort({ name: 1 });
+            const students = await Student.find({ isActive: true });
             const defaultAttendance = {
                 date: req.params.date,
                 students: students.map(student => ({

@@ -5,7 +5,7 @@ const Student = require('../models/Student');
 // GET /api/students - Get all students
 router.get('/', async (req, res) => {
     try {
-        const students = await Student.find({ isActive: true }).sort({ name: 1 });
+        const students = await Student.find({ isActive: true });
         res.json(students);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch students' });
